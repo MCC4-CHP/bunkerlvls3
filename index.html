@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Bunker Levels — MCC4</title>
+
+<meta name="theme-color" content="#0b2740"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Bunker Levels"/>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#212121;
+  --panel:#062868;
+  --accent:#d8dfe9;
+  --accent-2:#344c3d;
+  --muted:#9fb6c6;
+  --card:#1bace9;
+  --ok:#8ef0c9; --warn:#ffd08a; --bad:#ff8a9a; --standby:#0b2d3a;
+  --green-dark:#0b5a3f;
+  --input-bg:#cfdeca;
+  --toggle-blue:#2f7dff;
+  --level-green: #19a85b;
+  --level-orange: #ffb33a;
+  --level-red: #ff6b7a;
+}
+
+html,body{
+  height:100%;
+  margin:0;
+  background:var(--bg);
+  font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+#appShell{
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+}
+
+.page-wrap{
+  height:100%;
+  width:100%;
+  max-width:420px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px;
+  box-sizing:border-box;
+}
+
+.container{
+  width:100%;
+  max-width:420px;
+  padding:10px;
+  box-sizing:border-box;
+  background:linear-gradient(180deg,var(--panel),#062868);
+  border-radius:12px;
+  border:px solid rgba(255,255,255,0.06);
+  box-shadow:0 10px 30px rgba(2,6,10,0.6);
+  color:#e6f7f2;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  padding-bottom:60px !important;
+}
+
+h2{
+  margin:6px 0 15px;
+  font-size:1.02rem;
+  text-align:center;
+  font-weight:700;
+  color:#eaf8f3;
+}
+h2::after{
+  content:"";
+  display:block;
+  height:3px;
+  width:120px;
+  margin:6px auto 0;
+  border-radius:2px;
+  background:linear-gradient(90deg,var(--accent),#7dd1c6,var(--accent-2));
+}
+
+.pill{
+  min-width:110px;
+  height:36px;
+  border-radius:22px;
+  background:transparent;
+  color:#ccefe4;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:0 10px;
+  font-weight:700;
+}
+.pill .label {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+.pill .value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #ffffff;
+}
+
+.stack{
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  display:flex;
+  justify-content:flex-start;
+}
+
+.stack-inner{
+  width:100%;
+}
+
+.unit-wrapper{
+  display:flex;
+  border-radius:8px;
+  background:transparent;
+  overflow:visible;
+  align-items:stretch;
+  padding:2px 0;
+}
+
+.unit-label{
+  width:57px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:15px;
+  padding:4px 4px;
+}
+
+.unit5-label{background:linear-gradient(180deg,#212121,#5e5e5e)}
+.unit6-label{background:linear-gradient(180deg,#212121,#5e5e5e)}
+.unit7-label{background:linear-gradient(180deg,#212121,#5e5e5e)}
+
+.unit-label .title{
+  font-size:0.9rem;
+  font-weight:800;
+  letter-spacing:0.4px;
+  line-height:1.5;
+}
+
+.unit-label .badge{
+  width:65px;
+  height:65px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,0.12);
+  color:#fff;
+  font-weight:900;
+  font-size:2.2rem;
+  box-shadow:0 6px 14px rgba(0,0,0,0.2);
+  margin:4px 0;
+}
+.unit-label .max-txt{
+  font-size:0.7rem;
+  font-weight:700;
+  margin-top:0;
+  line-height:1;
+}
+
+/* ---- ROPE/FULL toggle for U8 ---- */
+.unit8-mode-toggle{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  margin-top:2px;
+}
+.unit8-mode-toggle .mode-label{
+  font-size:0.62rem;
+  font-weight:800;
+  letter-spacing:0.3px;
+  color:#aad4f5;
+  min-width:34px;
+  text-align:center;
+  line-height:1;
+}
+/* the pill slider */
+.toggle-pill{
+  position:relative;
+  width:36px;
+  height:18px;
+  border-radius:99px;
+  background:#1a3a50;
+  border:1px solid rgba(255,255,255,0.15);
+  cursor:pointer;
+  transition:background 0.25s;
+  flex-shrink:0;
+}
+.toggle-pill.disabled{
+  opacity:0.35;
+  cursor:not-allowed;
+  pointer-events:none;
+}
+.toggle-pill.on{
+  background:#e06c3a;
+}
+.toggle-pill .knob{
+  position:absolute;
+  top:2px;
+  left:2px;
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  background:#fff;
+  transition:left 0.22s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 1px 4px rgba(0,0,0,0.35);
+}
+.toggle-pill.on .knob{
+  left:20px;
+}
+
+.unit-box{
+  flex:1;
+  padding:4px 6px 2px;
+  box-sizing:border-box;
+  background:transparent;
+  overflow:visible;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  border:1px solid rgba(165, 103, 103, 0.7);
+  table-layout:fixed;
+}
+th,td{
+  border:3px solid rgba(162, 162, 162, 0.1);
+  padding:4px 2px;
+  height:44px;
+  text-align:center;
+  font-weight:700;
+  color:var(--muted);
+  background:transparent;
+  font-size:0.96rem;
+}
+.cell-content{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  padding:2px;
+}
+.row-labels td .cell-content{
+  font-size:1.2rem;
+  color:#0d0d0d;
+  background:#BBBCA7;
+}
+.row-levels td .cell-content{
+  font-size:1.5rem;
+}
+
+.active-cell{
+  background:var(--input-bg);
+  color:#000000;
+}
+.standby-cell{
+  background:rgba(255,255,255,0.05);
+  color:#ccc;
+}
+
+.lvl-green{background:var(--level-green) !important;color:#001a09 !important}
+.lvl-orange{background:var(--level-orange) !important;color:#111 !important}
+.lvl-red{background:var(--level-red) !important;color:#111 !important}
+
+.capacity-line{
+  background:rgba(255,255,255,0.04);
+  padding:6px;
+  margin-top:6px;
+  border-radius:6px;
+  font-weight:800;
+  text-align:left;
+  color:#d7f7ee;
+  display:none;
+}
+.summary{
+  background:rgba(160, 69, 69, 0.02);
+  padding:6px;
+  margin-top:6px;
+  border-radius:6px;
+  font-weight:700;
+  text-align:left;
+  color:#d7f7ee;
+  min-height:12px;
+  max-height:12px;
+  visibility:hidden;
+}
+
+.header-standby{
+  background:#737370;
+  box-shadow:inset 0 0 0 3px rgba(255,180,0,0.4);
+  color:#41403f;
+  font-weight:800;
+}
+
+input[type="text"][data-standby="1"]{
+  opacity:1;
+  color:#9e9e9e !important;
+}
+
+input[type="text"]{
+  width:100%;
+  height:100%;
+  font-size:1.5rem;
+  font-weight:800;
+  text-align:center;
+  border:none;
+  background:#ffffff;
+  color:#000000;
+  padding:6px;
+  border-radius:4px;
+}
+input[type="text"]:focus{
+  outline:none;
+  background:#ffffff;
+  box-shadow:0 0 0 2px rgba(0,0,0,0.06);
+}
+
+#unit7 .row-levels td input[type="text"]{
+  font-size:1.2rem;
+}
+#unit8 .row-levels td input[type="text"]{
+  font-size:1.1rem;
+}
+#unit8 th, #unit8 td{
+  height:36px;
+  padding:2px 1px;
+}
+
+.bar{
+  display:flex;
+  gap:8px;
+  margin-top:2px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  padding:8px;
+  background:transparent;
+  position:static;
+}
+button{
+  padding:8px 10px;
+  border-radius:8px;
+  border:none;
+  background:var(--accent);
+  color:#022;
+  font-weight:800;
+  cursor:pointer;
+}
+button.secondary{
+  background:transparent;
+  color:#cfeee0;
+  border:1px solid rgba(255,255,255,0.04);
+}
+button:disabled{
+  background:rgba(255,255,255,0.04);
+  color:#556070;
+  cursor:not-allowed;
+}
+
+.jump-toggle{
+  width:36px;
+  height:36px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(0,0,0,0.08);
+  background:var(--toggle-blue);
+  color:#012;
+  font-weight:900;
+  box-shadow:0 8px 22px rgba(47,125,255,0.28);
+  font-size:0.95rem;
+}
+.jump-toggle.disabled{
+  opacity:0.45;
+  background:#344c3d;
+}
+
+.alert-toggle{
+  width:36px;
+  height:36px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(0,0,0,0.08);
+  background:#ae7960;
+  color:#130101;
+  font-weight:900;
+  box-shadow:0 8px 22px rgba(255,82,82,0.22);
+  font-size:0.95rem;
+}
+.alert-toggle.active{
+  background:#ae7960;
+  box-shadow:0 10px 30px rgba(255,31,31,0.28);
+  color:#fff;
+}
+.alert-toggle:focus{
+  outline:none;
+  box-shadow:0 10px 30px rgba(255,31,31,0.28);
+}
+.alert-toggle.disabled{
+  opacity:0.6;
+  background:#ae7960;
+}
+
+.edit-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+@media (max-width:360px){
+  .unit-label{width:64px;height:105px}
+  .unit-label .badge{width:48px;height:48px;font-size:1.0rem}
+  th,td{height:40px;font-size:0.92rem}
+}
+
+#copyBtn{
+  background:#344c3d;
+  color:#fff;
+}
+#resetBtn{
+  background:#344c3d;
+  color:#fff;
+}
+
+.share-toggle{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:none;
+  background:#ae7960;
+  color:#fff;
+  box-shadow:0 6px 14px rgba(40,167,69,0.4);
+  cursor:pointer;
+  transition:all 0.2s ease;
+}
+.share-toggle:hover{
+  background:#ae7960;
+  box-shadow:0 8px 18px rgba(52,199,89,0.45);
+}
+.share-toggle:active{
+  transform:scale(0.95);
+}
+#shareBtn{
+  order:0;
+}
+
+#qrModalOverlay{
+  position:fixed;
+  left:0;top:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+#qrModal{
+  background:linear-gradient(180deg,#05202a,#08303a);
+  padding:14px;
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.6);
+  max-width:92vw;
+  max-height:92vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+#qrModal img{
+  max-width:88vw;
+  max-height:64vh;
+  border-radius:8px;
+}
+#qrModal .qr-title{
+  font-weight:800;
+  color:#e6f7f2;
+}
+#qrClose{
+  padding:8px 12px;
+  border-radius:8px;
+  border:none;
+  background:#2d042d;
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
+#qrActions{
+  display:flex;
+  gap:8px;
+}
+
+#bottomBar{
+  position:fixed;
+  bottom:12px;
+  left:50%;
+  transform:translateX(-50%);
+  width:calc(100% - 30px);
+  max-width:420px;
+  background:rgba(68, 87, 51, 0.432);
+  backdrop-filter:blur(6px);
+  padding:5px;
+  border-radius:30px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:0;
+  z-index:99999;
+}
+#bottomBar button{
+  flex:1;
+  padding:8px 0;
+  min-width:0;
+  height:42px;
+  border:none;
+  border-radius:10px;
+  font-weight:700;
+  cursor:pointer;
+}
+#bottomBar button{
+  border-radius:0;
+}
+#bottomBar button:first-child{
+  border-radius:22px 0 0 22px;
+}
+#bottomBar button:last-child{
+  border-radius:0 22px 22px 0;
+}
+
+.unit-group{
+  padding:4px;
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.group-56{
+  background:rgba(135,159,155,0.45);
+  border:1px solid rgba(135,159,155,0.35);
+}
+.group-7{
+  background:rgba(140,150,160,0.45);
+  border:1px solid rgba(140,150,160,0.35);
+}
+.group-8{
+  background:rgba(0, 120, 200, 0.28);
+  border:1px solid rgba(0, 120, 200, 0.203);
+}
+
+.u8-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:4px 8px;
+  cursor:pointer;
+  border-radius:8px;
+  background:rgba(0,120,200,0.2);
+  user-select:none;
+}
+.u8-header .u8-title{
+  font-size:0.85rem;
+  font-weight:800;
+  color:#d0eeff;
+  letter-spacing:0.5px;
+}
+.u8-toggle-icon{
+  font-size:1.2rem;
+  font-weight:900;
+  color:#d0eeff;
+}
+</style>
+</head>
+<body>
+<div id="appShell">
+  <div class="page-wrap">
+    <div class="container" role="main">
+      <h2>Dr.NTTPS – Unit Bunker Levels – MCC-4</h2>
+
+      <div id="timestamp-container" style="display:flex;gap:8px;justify-content:center;margin-bottom:6px">
+        <div class="pill">
+          <span class="label">Time</span>
+          <span class="value" id="timeText" contenteditable="true" tabindex="0">--:--</span>
+        </div>
+        <div class="pill">
+          <span class="label">Date</span>
+          <span class="value" id="dateText" contenteditable="true" tabindex="0">--</span>
+        </div>
+      </div>
+
+      <div class="stack" id="stack">
+        <div class="stack-inner">
+
+          <!-- GROUP 1 : UNIT 5 + UNIT 6 -->
+          <div class="unit-group group-56">
+        
+            <div class="unit-wrapper" id="wrap5">
+              <div class="unit-label unit5-label">
+                <div class="title">UNIT</div>
+                <div class="badge">5</div>
+                <div class="max-txt">Max: 15mt</div>
+              </div>
+              <div class="unit-box">
+                <table id="unit5"></table>
+                <div id="summary-unit5" class="summary"></div>
+              </div>
+            </div>
+        
+            <div class="unit-wrapper" id="wrap6">
+              <div class="unit-label unit6-label">
+                <div class="title">UNIT</div>
+                <div class="badge">6</div>
+                <div class="max-txt">Max: 15mt</div>
+              </div>
+              <div class="unit-box">
+                <table id="unit6"></table>
+                <div id="summary-unit6" class="summary"></div>
+              </div>
+            </div>
+        
+          </div>
+        
+          <!-- GROUP 2 : UNIT 7 -->
+          <div class="unit-group group-7">
+            <div class="unit-wrapper" id="wrap7">
+              <div class="unit-label unit7-label">
+                <div class="title">UNIT</div>
+                <div class="badge">7</div>
+                <div class="max-txt">Max: 17mt</div>
+              </div>
+              <div class="unit-box">
+                <table id="unit7"></table>
+                <div id="summary-unit7" class="summary"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- GROUP 3 : UNIT 8 -->
+          <div class="unit-group group-8">
+
+            <div class="u8-header" id="u8BadgeLabel">
+              <span class="u8-title">UNIT 8 — Max: 25mt</span>
+              <span class="u8-toggle-icon" id="u8MaxTxt">＋</span>
+            </div>
+
+            <div id="u8Content" style="display:none">
+              <div class="unit-wrapper" id="wrap8">
+                <div class="unit-label unit7-label">
+                  <div class="title">UNIT</div>
+                  <div class="badge">8</div>
+                  <div class="max-txt">Max: 25mt</div>
+                  <!-- ROPE / FULL toggle -->
+                  <div class="unit8-mode-toggle" id="u8ModeToggleWrap">
+                    <div class="mode-label" id="u8ModeLabel">REV</div>
+                    <div class="toggle-pill disabled" id="u8ModePill" title="Toggle REV mode">
+                      <div class="knob"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="unit-box">
+                  <table id="unit8"></table>
+                  <div id="summary-unit8" class="summary"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- QR Modal -->
+      <div id="qrModalOverlay" aria-hidden="true">
+        <div id="qrModal" role="dialog" aria-modal="true">
+          <div class="qr-title">Scan QR to copy bunker levels</div>
+          <img id="qrImg" alt="QR code" src="" />
+          <div id="qrActions">
+            <button id="qrDownload">Download</button>
+            <button id="qrClose">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fixed bottom bar -->
+      <div id="bottomBar">
+        <button id="updateBtn" disabled>UPDATE</button>
+        <button id="resetBtn" class="secondary">RESET</button>
+        <button id="editBtn" style="display:none" class="secondary">EDIT</button>
+        <button id="alertBtn" class="secondary">LOW</button>
+        <button id="pauseToggle" class="secondary">1-digit</button>
+        <button id="shareBtn" class="share-toggle" title="Share snapshot">SHARE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================  STATE  ===================== */
+let editMode = false;
+let currentDate = new Date();
+const jumpTimers = new Map(), lastValues = {}, lastEntered = {};
+const ENTRY_LIMITS = {unit5:15, unit6:15, unit7:17, unit8:25};
+const CAPACITY     = {unit5:15, unit6:15, unit7:17, unit8:25};
+
+let alertMode   = false;
+let allowJump   = true;
+let pauseOnLow  = false;
+let u8Visible   = false;
+
+// ROPE=false (default) means user enters rope reading → remaining = cap - entered
+// FULL=true means user enters actual bunker level directly → remaining = entered
+let u8FullMode  = false;
+
+// persistent manual standby state
+const standbyState = {unit5:[], unit6:[], unit7:[], unit8:[]};
+
+// Track which "phase" has been updated so UPDATE can stay enabled for U8 separately
+// updatedPhase: 0=nothing, 1=567 updated (edit shows), 2=U8 also updated
+let updatedPhase = 0;
+
+/* =====================  HELPERS  ===================== */
+function rounded15(d){
+  const x=new Date(d);
+  let m=Math.round(x.getMinutes()/15)*15;
+  if(m===60){x.setHours(x.getHours()+1);m=0;}
+  x.setMinutes(m,0,0);
+  return x;
+}
+function fmtDate(d){return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;}
+function fmtTime(d){return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+
+/* =====================  DOM REFS  ===================== */
+let timeText,dateText,updateBtn,editBtn,resetBtn,alertBtn,shareBtn;
+
+document.addEventListener('DOMContentLoaded',()=>{
+  timeText  = document.getElementById('timeText');
+  dateText  = document.getElementById('dateText');
+  updateBtn = document.getElementById('updateBtn');
+  editBtn   = document.getElementById('editBtn');
+  resetBtn  = document.getElementById('resetBtn');
+  alertBtn  = document.getElementById('alertBtn');
+  shareBtn  = document.getElementById('shareBtn');
+
+  if(updateBtn) updateBtn.addEventListener('click', onUpdate);
+  if(resetBtn)  resetBtn.addEventListener('click',  resetTables);
+  if(editBtn)   editBtn.addEventListener('click',   enterEditMode);
+  if(alertBtn){ alertBtn.type='button'; alertBtn.addEventListener('click',()=>toggleAlert()); }
+
+  const pauseToggle = document.getElementById('pauseToggle');
+  if(pauseToggle){
+    pauseToggle.style.background = '#344c3d';
+    pauseToggle.addEventListener('click',()=>{
+      pauseOnLow = !pauseOnLow;
+      pauseToggle.style.background = pauseOnLow ? '#2f7dff' : '#344c3d';
+      pauseToggle.textContent = pauseOnLow ? '2-digit' : '1-digit';
+      updateInputFontSizes();
+    });
+  }
+
+  if(shareBtn) shareBtn.addEventListener('click',()=>{
+    const orig = shareBtn.textContent;
+    shareBtn.disabled = true;
+    shareBtn.textContent = '*';
+    sharePanelImage().finally(()=>{ shareBtn.disabled=false; shareBtn.textContent=orig; });
+  });
+
+  // QR modal
+  const qrOverlay  = document.getElementById('qrModalOverlay');
+  const qrClose    = document.getElementById('qrClose');
+  const qrDownload = document.getElementById('qrDownload');
+  qrClose.addEventListener('click',()=>{ qrOverlay.style.display='none'; qrOverlay.setAttribute('aria-hidden','true'); });
+  qrOverlay.addEventListener('click',(e)=>{
+    if(e.target===qrOverlay){ qrOverlay.style.display='none'; qrOverlay.setAttribute('aria-hidden','true'); }
+  });
+  qrDownload.addEventListener('click',()=>{
+    const img=document.getElementById('qrImg');
+    if(!img||!img.src) return;
+    const a=document.createElement('a'); a.href=img.src; a.download='bunker-levels-qr.png';
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  // Time/Date editable fields
+  currentDate = rounded15(new Date());
+  if(timeText) timeText.textContent = fmtTime(currentDate);
+  if(dateText) dateText.textContent = fmtDate(currentDate);
+
+  if(timeText){
+    timeText.addEventListener('blur',()=>{
+      const txt=(timeText.textContent||'').trim();
+      const m=txt.match(/(\d{1,2}):(\d{2})/);
+      if(m){
+        currentDate.setHours(Math.max(0,Math.min(23,parseInt(m[1],10)||0)));
+        currentDate.setMinutes(Math.max(0,Math.min(59,parseInt(m[2],10)||0)));
+        timeText.textContent=fmtTime(currentDate);
+      } else { timeText.textContent=fmtTime(currentDate); }
+    });
+    timeText.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){e.preventDefault();timeText.blur();} });
+  }
+  if(dateText){
+    dateText.addEventListener('blur',()=>{
+      const txt=(dateText.textContent||'').trim();
+      const m=txt.match(/(\d{1,2})-(\d{1,2})-(\d{4})/);
+      if(m){
+        currentDate.setFullYear(parseInt(m[3],10)||currentDate.getFullYear());
+        currentDate.setMonth((Math.max(1,Math.min(12,parseInt(m[2],10)||1)))-1);
+        currentDate.setDate(Math.max(1,Math.min(31,parseInt(m[1],10)||1)));
+        dateText.textContent=fmtDate(currentDate);
+      } else { dateText.textContent=fmtDate(currentDate); }
+    });
+    dateText.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){e.preventDefault();dateText.blur();} });
+  }
+
+  // U8 expand/collapse
+  const u8BadgeLabel = document.getElementById('u8BadgeLabel');
+  if(u8BadgeLabel){
+    u8BadgeLabel.addEventListener('click',()=>{
+      u8Visible = !u8Visible;
+      const u8Content = document.getElementById('u8Content');
+      if(u8Content) u8Content.style.display = u8Visible ? '' : 'none';
+      const u8MaxTxt = document.getElementById('u8MaxTxt');
+      if(u8MaxTxt) u8MaxTxt.textContent = u8Visible ? '－' : '＋';
+      // If U8 expanded and has inputs, re-check validate
+      validateInputs();
+    });
+  }
+
+  // U8 ROPE/FULL toggle pill
+  const u8Pill = document.getElementById('u8ModePill');
+  if(u8Pill){
+    u8Pill.addEventListener('click',()=>{
+      u8FullMode = !u8FullMode;
+      u8Pill.classList.toggle('on', u8FullMode);
+      reRenderU8();
+    });
+  }
+
+  buildAllInputs(false);
+});
+
+/* =====================  TABLE BUILDER  ===================== */
+function createInputTable(id, bunkers){
+  const t = document.getElementById(id);
+  t.innerHTML = '';
+
+  const r1 = document.createElement('tr'); r1.className = 'row-labels';
+  bunkers.forEach((b,idx)=>{
+    const td = document.createElement('td');
+    td.innerHTML = `<div class="cell-content">${b}</div>`;
+    td.style.cursor = 'pointer';
+    td.addEventListener('click',()=> toggleHeaderStandby(id,idx));
+    r1.appendChild(td);
+  });
+  t.appendChild(r1);
+
+  const r2 = document.createElement('tr'); r2.className = 'row-levels';
+  bunkers.forEach((b,i)=>{
+    const td = document.createElement('td');
+    td.innerHTML = `<div class="cell-content"><input type="text" inputmode="numeric" maxlength="2" /></div>`;
+    const input = td.querySelector('input');
+    const isStandby = standbyState[id]?.includes(b);
+    input.style.color = isStandby ? '#9e9e9e' : '#000000';
+    input.dataset.unit   = id;
+    input.dataset.bunker = b;
+
+    td.querySelector('.cell-content').addEventListener('click',(ev)=>{
+      ev.stopPropagation();
+      try{ input.focus(); input.select(); }catch(e){}
+    });
+
+    if(standbyState[id] && standbyState[id].includes(b)){
+      input.dataset.standby = '1';
+      input.value = '';
+      r1.cells[i].classList.add('header-standby');
+    } else {
+      input.dataset.standby = '0';
+      r1.cells[i].classList.remove('header-standby');
+    }
+
+    input.addEventListener('input', ()=> handleInput(input,id,bunkers.length,i));
+    input.addEventListener('keydown',(e)=> onInputKey(e,input,id,bunkers.length,i));
+    input.addEventListener('focus', ()=> { try{ input.select(); }catch(e){} });
+    r2.appendChild(td);
+  });
+  t.appendChild(r2);
+}
+
+/* =====================  STANDBY TOGGLE  ===================== */
+function toggleHeaderStandby(unitId, bunkerIndex){
+  const table = document.getElementById(unitId);
+  if(!table || table.rows.length<1) return;
+  const bunkers = Array.from(table.rows[0].cells).map(c=>(c.textContent||c.innerText||'').trim());
+  const bunker  = bunkers[bunkerIndex];
+  if(!bunker) return;
+  const arr = standbyState[unitId] || [];
+  const idx = arr.indexOf(bunker);
+  if(idx>=0){ arr.splice(idx,1); } else { arr.push(bunker); }
+  standbyState[unitId] = arr;
+
+  if(table.rows.length>=2 && table.rows[1].cells[bunkerIndex].querySelector('input')){
+    const input = table.rows[1].cells[bunkerIndex].querySelector('input');
+    if(input){
+      const isSb = arr.includes(bunker);
+      input.dataset.standby = isSb ? '1' : '0';
+      input.style.color = isSb ? '#9e9e9e' : '#ffffff';
+    }
+    if(arr.includes(bunker)){
+      table.rows[0].cells[bunkerIndex].classList.add('header-standby');
+      if(input) input.value='';
+    } else {
+      table.rows[0].cells[bunkerIndex].classList.remove('header-standby');
+    }
+    validateInputs();
+  } else {
+    const unitMeta = unitMetaById(unitId);
+    const lastEnteredForUnit = unitMeta.bunkers.map(b=> lastEntered[`${unitId}-${b}`] ?? null);
+    renderResultTable(unitId, unitMeta.cap, unitMeta.bunkers, lastEnteredForUnit, arr);
+  }
+}
+
+/* =====================  KEY NAVIGATION  ===================== */
+function onInputKey(e, input, unitId, totalCols, colIndex){
+  if(e.key==='ArrowRight'){
+    e.preventDefault();
+    try{ if(colIndex+1<totalCols) document.getElementById(unitId).rows[1].cells[colIndex+1].querySelector('input').focus(); }catch{}
+  }
+  if(e.key==='ArrowLeft'){
+    e.preventDefault();
+    try{ if(colIndex-1>=0) document.getElementById(unitId).rows[1].cells[colIndex-1].querySelector('input').focus(); }catch{}
+  }
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const v   = input.value.replace(/\D/g,'');
+    const num = v ? parseInt(v,10) : null;
+    const minForJump = (pauseOnLow && unitId==='unit8') ? 2 : pauseOnLow ? 1 : 0;
+    if(allowJump && num!==null && num>minForJump){
+      jumpToNext(unitId, totalCols, colIndex);
+    }
+  }
+}
+
+function jumpToNext(unitId, totalCols, colIndex){
+  if(!allowJump) return;
+  try{
+    const row = document.getElementById(unitId).rows[1];
+    if(colIndex+1 < totalCols){
+      const next = row.cells[colIndex+1].querySelector('input');
+      if(next){ next.focus(); return; }
+    } else {
+      if(unitId==='unit5')      document.querySelector('#unit6 input')?.focus();
+      else if(unitId==='unit6') document.querySelector('#unit7 input')?.focus();
+      else if(unitId==='unit7') document.querySelector('#unit8 input')?.focus();
+      else if(unitId==='unit8') updateBtn && updateBtn.focus();
+    }
+  }catch(e){}
+}
+
+/* =====================  INPUT HANDLER  ===================== */
+function handleInput(input, unitId, totalCols, colIndex){
+  const cap = ENTRY_LIMITS[unitId];
+  let v = input.value.replace(/\D/g,'');
+  input.value = v;
+  if(v.startsWith('0')){ input.value=''; return; }
+
+  // In 1-digit mode, block 2 digits in ALL cells of ALL units
+  if(!pauseOnLow){
+    if(v.length>1){ input.value=v.slice(0,1); return; }
+  }
+
+  let num = v ? parseInt(v,10) : NaN;
+  if(num > cap){ input.value=String(cap); num=cap; }
+
+  const minForJump = pauseOnLow ? ((unitId==='unit8') ? 2 : 1) : 0;
+  if(pauseOnLow && num<=minForJump){ clearTimeout(jumpTimers.get(input)); validateInputs(); return; }
+  if(num>minForJump && num<=cap){ clearTimeout(jumpTimers.get(input)); jumpToNext(unitId,totalCols,colIndex); }
+  validateInputs();
+}
+
+/* =====================  VALIDATE — RE-ENABLE UPDATE  ===================== */
+function validateInputs(){
+  const units567 = [
+    {id:'unit5', cap:ENTRY_LIMITS.unit5, bunkers:['A','B','C','D','E','F'], maxEmpty:2},
+    {id:'unit6', cap:ENTRY_LIMITS.unit6, bunkers:['A','B','C','D','E','F'], maxEmpty:2},
+    {id:'unit7', cap:ENTRY_LIMITS.unit7, bunkers:['A','B','C','D','E','F','G'], maxEmpty:0},
+  ];
+
+  let ok567 = true;
+  units567.forEach(u=>{
+    const table = document.getElementById(u.id);
+    if(!table || !table.rows || table.rows.length<2){ ok567=false; return; }
+    let emptyCount=0;
+    for(let i=0;i<u.bunkers.length;i++){
+      const input = table.rows[1].cells[i].querySelector('input');
+      if(!input || input.dataset.standby==='1') continue;
+      const v=input.value.trim();
+      const d=v?parseInt(v,10):null;
+      if(!d||d<=0||d>u.cap){ emptyCount++; if(emptyCount>u.maxEmpty){ok567=false;return;} }
+    }
+  });
+
+  if(!updateBtn) return;
+  updateBtn.disabled = !ok567;
+  updateBtn.style.visibility = 'visible';
+}
+
+/* =====================  SUMMARIES  ===================== */
+function updateSummaries(){
+  ['unit5','unit6','unit7','unit8'].forEach(id=>{
+    const standbys = standbyState[id]||[];
+    const box = document.getElementById('summary-'+id);
+    if(!box) return;
+    if(standbys.length){
+      box.textContent='Standby Bunkers: '+standbys.join(', ');
+      box.style.visibility='visible';
+    } else {
+      box.textContent='';
+      box.style.visibility='hidden';
+    }
+  });
+}
+
+/* =====================  COLOR CLASS  ===================== */
+function classByEntered(unitId, enteredVal, displayVal){
+  if(enteredVal == null) return '';
+  if(unitId==='unit8'){
+    const val = (displayVal != null) ? displayVal : enteredVal;
+    if(val < 15) return 'lvl-red';
+    return '';
+  }
+  if(unitId==='unit7'){ if(enteredVal>=12&&enteredVal<=17) return 'lvl-red'; }
+  if(enteredVal>=10&&enteredVal<=15) return 'lvl-red';
+}
+
+/* =====================  RENDER RESULT TABLE  ===================== */
+function renderResultTable(id, cap, bunkers, entered, standby){
+  const t = document.getElementById(id);
+  t.innerHTML='';
+
+  const r1 = document.createElement('tr'); r1.className='row-labels';
+  bunkers.forEach((b,idx)=>{
+    const td=document.createElement('td');
+    td.innerHTML=`<div class="cell-content">${b}</div>`;
+    td.style.cursor='pointer';
+    if(standby.includes(b)) td.classList.add('header-standby');
+    td.addEventListener('click',()=> toggleHeaderStandby(id,idx));
+    r1.appendChild(td);
+  });
+  t.appendChild(r1);
+
+  const r2 = document.createElement('tr'); r2.className='row-levels';
+  bunkers.forEach((b,i)=>{
+    const td=document.createElement('td');
+    const key=`${id}-${b}`;
+    const isManualStandby=(standby||[]).includes(b);
+    const remain=lastValues[key];
+
+    if(isManualStandby){
+      td.className='standby-cell';
+      td.innerHTML=`<div class="cell-content">${remain??''}</div>`;
+    } else {
+      // active-cell for all non-standby — empty string if no value yet (U8 not yet entered)
+      td.className='active-cell';
+      td.innerHTML=`<div class="cell-content">${remain??''}</div>`;
+    }
+    r2.appendChild(td);
+  });
+  t.appendChild(r2);
+  updateSummaries();
+}
+
+/* =====================  UNIT META  ===================== */
+function unitMetaById(id){
+  const meta={
+    unit5:{id:'unit5',cap:CAPACITY.unit5,bunkers:['A','B','C','D','E','F']},
+    unit6:{id:'unit6',cap:CAPACITY.unit6,bunkers:['A','B','C','D','E','F']},
+    unit7:{id:'unit7',cap:CAPACITY.unit7,bunkers:['A','B','C','D','E','F','G']},
+    unit8:{id:'unit8',cap:CAPACITY.unit8,bunkers:['A','B','C','D','E','F','G','H']}
+  };
+  return meta[id];
+}
+
+/* =====================  COLLECT & RENDER  ===================== */
+function collectAndRender(keepCurrentTime, unitsToProcess){
+  const allUnits = [
+    {id:'unit5',cap:CAPACITY.unit5,inputCap:ENTRY_LIMITS.unit5,bunkers:['A','B','C','D','E','F'],     allowEmpty:true},
+    {id:'unit6',cap:CAPACITY.unit6,inputCap:ENTRY_LIMITS.unit6,bunkers:['A','B','C','D','E','F'],     allowEmpty:true},
+    {id:'unit7',cap:CAPACITY.unit7,inputCap:ENTRY_LIMITS.unit7,bunkers:['A','B','C','D','E','F','G'], allowEmpty:false},
+    {id:'unit8',cap:CAPACITY.unit8,inputCap:ENTRY_LIMITS.unit8,bunkers:['A','B','C','D','E','F','G','H'],allowEmpty:true}
+  ];
+
+  const units = unitsToProcess
+    ? allUnits.filter(u=> unitsToProcess.includes(u.id))
+    : allUnits;
+
+  for(const u of units){
+    const row=document.getElementById(u.id).rows[1];
+    if(!row) return false;
+    const entered=[], standby=[];
+    for(let i=0;i<u.bunkers.length;i++){
+      const input=row.cells[i].querySelector('input');
+      const isManualStandby=input&&input.dataset&&input.dataset.standby==='1';
+      const v=input.value.trim();
+      const d=v?parseInt(v,10):null;
+      const key=`${u.id}-${u.bunkers[i]}`;
+
+      if(isManualStandby){
+        standby.push(u.bunkers[i]); entered.push(null);
+        if(!standbyState[u.id].includes(u.bunkers[i])) standbyState[u.id].push(u.bunkers[i]);
+      } else if(!d||d<=0||d>u.inputCap){
+        if(u.allowEmpty){
+          // For U8: empty cell stays as active-cell (green) with no value — NOT pushed to standby
+          if(u.id==='unit8'){
+            entered.push(null);
+          } else {
+            standby.push(u.bunkers[i]); entered.push(null);
+            if(!standbyState[u.id].includes(u.bunkers[i])) standbyState[u.id].push(u.bunkers[i]);
+          }
+        } else return false;
+      } else {
+        entered.push(d);
+        lastEntered[key]=d;
+        lastValues[key] = u.cap - d;  // always: remaining = cap − entered
+
+        const idx=standbyState[u.id].indexOf(u.bunkers[i]);
+        if(idx>=0) standbyState[u.id].splice(idx,1);
+      }
+    }
+    renderResultTable(u.id, u.cap, u.bunkers, entered, standbyState[u.id]);
+  }
+
+  if(!keepCurrentTime) currentDate=rounded15(new Date());
+  return true;
+}
+
+/* =====================  UPDATE BUTTON  ===================== */
+function onUpdate(){
+  if(!collectAndRender(false, ['unit5','unit6','unit7'])) return;
+  collectAndRender(true, ['unit8']);
+  document.querySelectorAll('.capacity-line').forEach(el=>el.style.display='block');
+  updateBtn.disabled = true;
+  updateBtn.style.visibility = 'hidden';
+  if(editBtn) editBtn.style.display = '';
+
+  // Enable REV slider only if all U8 non-standby cells have values
+  const u8Pill = document.getElementById('u8ModePill');
+  if(u8Pill){
+    const bunkers = ['A','B','C','D','E','F','G','H'];
+    const allFilled = bunkers.every(b=>{
+      if((standbyState.unit8||[]).includes(b)) return true;
+      return lastValues[`unit8-${b}`] != null;
+    });
+    u8Pill.classList.toggle('disabled', !allFilled);
+  }
+}
+
+/* =====================  EDIT MODE  ===================== */
+function enterEditMode(){
+  buildAllInputs(true);
+  if(editBtn) editBtn.style.display='none';
+  if(updateBtn){ updateBtn.style.visibility='visible'; updateBtn.disabled=false; }
+  // Disable REV slider while in edit mode
+  const u8Pill=document.getElementById('u8ModePill');
+  if(u8Pill){ u8Pill.classList.add('disabled'); u8Pill.classList.remove('on'); }
+  u8FullMode=false;
+  document.querySelectorAll('#unit5 input,#unit6 input,#unit7 input,#unit8 input').forEach(input=>{
+    input.addEventListener('input',()=>{ if(updateBtn) updateBtn.disabled=false; });
+  });
+  // Focus first cell of U5 and select its value
+  const firstInput = document.querySelector('#unit5 .row-levels td:first-child input');
+  if(firstInput){ setTimeout(()=>{ firstInput.focus(); firstInput.select(); }, 50); }
+}
+
+/* =====================  BUILD ALL INPUTS  ===================== */
+function buildAllInputs(prefill){
+  createInputTable('unit5',['A','B','C','D','E','F']);
+  createInputTable('unit6',['A','B','C','D','E','F']);
+  createInputTable('unit7',['A','B','C','D','E','F','G']);
+  createInputTable('unit8',['A','B','C','D','E','F','G','H']);
+
+  if(prefill){
+    ['unit5','unit6','unit7','unit8'].forEach(u=>{
+      const letters = u==='unit8' ? ['A','B','C','D','E','F','G','H']
+                    : u==='unit7' ? ['A','B','C','D','E','F','G']
+                    : ['A','B','C','D','E','F'];
+      const row=document.getElementById(u).rows[1];
+      letters.forEach((b,i)=>{
+        const key=`${u}-${b}`;
+        if(lastEntered[key]!=null) row.cells[i].querySelector('input').value=String(lastEntered[key]);
+        if(standbyState[u]&&standbyState[u].includes(b)) row.cells[i].querySelector('input').dataset.standby='1';
+      });
+    });
+  } else {
+    ['unit5','unit6','unit7','unit8'].forEach(u=>{
+      const letters = u==='unit8' ? ['A','B','C','D','E','F','G','H']
+                    : u==='unit7' ? ['A','B','C','D','E','F','G']
+                    : ['A','B','C','D','E','F'];
+      letters.forEach(b=>{ delete lastEntered[`${u}-${b}`]; delete lastValues[`${u}-${b}`]; });
+    });
+  }
+  validateInputs();
+  updateInputFontSizes();
+}
+
+/* =====================  RESET  ===================== */
+function resetTables(){
+  standbyState.unit5=[]; standbyState.unit6=[]; standbyState.unit7=[]; standbyState.unit8=[];
+  currentDate=rounded15(new Date());
+  if(timeText) timeText.textContent=fmtTime(currentDate);
+  if(dateText) dateText.textContent=fmtDate(currentDate);
+  buildAllInputs(false);
+  updateSummaries();
+  if(updateBtn){ updateBtn.disabled=true; updateBtn.style.visibility='visible'; }
+  if(editBtn) editBtn.style.display='none';
+  u8Visible=false;
+  const u8Content=document.getElementById('u8Content');
+  if(u8Content) u8Content.style.display='none';
+  const u8MaxTxt=document.getElementById('u8MaxTxt');
+  if(u8MaxTxt) u8MaxTxt.textContent='＋';
+  // Reset ROPE/FULL toggle back to ROPE
+  u8FullMode=false;
+  const u8Pill=document.getElementById('u8ModePill');
+  if(u8Pill){ u8Pill.classList.remove('on'); u8Pill.classList.add('disabled'); }
+  const u8Lbl=document.getElementById('u8ModeLabel');
+  if(u8Lbl){ u8Lbl.textContent='REV'; u8Lbl.style.color='#aad4f5'; u8Lbl.style.textShadow='none'; }
+  document.querySelector('#unit5 input')?.focus();
+}
+
+/* =====================  FONT SIZES  ===================== */
+function updateInputFontSizes(){
+  const u7inputs=document.querySelectorAll('#unit7 .row-levels td input[type="text"]');
+  const u8inputs=document.querySelectorAll('#unit8 .row-levels td input[type="text"]');
+  u7inputs.forEach(inp=> inp.style.fontSize=pauseOnLow?'1.1rem':'1.3rem');
+  u8inputs.forEach(inp=> inp.style.fontSize=pauseOnLow?'0.95rem':'1.1rem');
+}
+
+/* =====================  ALERT TOGGLE  ===================== */
+function toggleAlert(){
+  alertMode=!alertMode;
+  if(alertBtn){
+        alertBtn.classList.toggle('active', alertMode);
+        alertBtn.setAttribute('aria-pressed', alertMode?'true':'false');
+        alertBtn.textContent='LOW';
+        alertBtn.style.background = alertMode ? '#ff6b7a' : '';
+        alertBtn.style.color = alertMode ? '#111' : '';
+  }
+  refreshColoringFromDisplayedTables();
+}
+
+function refreshColoringFromDisplayedTables(){
+  ['unit5','unit6','unit7','unit8'].forEach(id=>{
+    const table=document.getElementById(id);
+    if(!table||table.rows.length<2) return;
+    const headRow=table.rows[0], bodyRow=table.rows[1];
+    for(let i=0;i<headRow.cells.length;i++){
+      const headCell=headRow.cells[i], bodyCell=bodyRow.cells[i];
+      const bunker=(headCell.textContent||headCell.innerText||'').trim();
+      const key=`${id}-${bunker}`;
+      const hasValue=typeof lastValues[key]!=='undefined'&&lastValues[key]!==null;
+      const isStandby=Array.isArray(standbyState[id])&&standbyState[id].includes(bunker);
+      const displayText=hasValue?String(lastValues[key]):'';
+      if(isStandby||displayText===''){
+        bodyCell.className='standby-cell';
+        bodyCell.innerHTML=`<div class="cell-content">${displayText}</div>`;
+      } else {
+        const classes=['active-cell'];
+        if(alertMode){ const cc=classByEntered(id, lastEntered[key]??null, lastValues[key]??null); if(cc) classes.push(cc); }
+        bodyCell.className=classes.join(' ');
+        bodyCell.innerHTML=`<div class="cell-content">${displayText}</div>`;
+      }
+    }
+  });
+  updateSummaries();
+}
+
+/* =====================  REV TOGGLE RE-RENDER  ===================== */
+function reRenderU8(){
+  const bunkers = ['A','B','C','D','E','F','G','H'];
+  const cap = CAPACITY.unit8;
+  const hasData = bunkers.some(b=> lastValues[`unit8-${b}`] != null);
+  if(!hasData) return;
+
+  bunkers.forEach(b=>{
+    const key = `unit8-${b}`;
+    if(lastValues[key] == null) return;
+    lastValues[key] = cap - lastValues[key];  // flip: 25 - current displayed value
+  });
+
+  const enteredArr = bunkers.map(b=> lastEntered[`unit8-${b}`] ?? null);
+  renderResultTable('unit8', cap, bunkers, enteredArr, standbyState['unit8']);
+  refreshColoringFromDisplayedTables();
+}
+function showQRForText(text){
+  if(typeof QRious==='undefined'){ alert('QR generator library not available'); return; }
+  const size=Math.min(600,Math.max(240,Math.floor(window.innerWidth*0.7)));
+  const qr=new QRious({value:text,size:size});
+  const dataUrl=qr.toDataURL('image/png');
+  const img=document.getElementById('qrImg'); img.src=dataUrl;
+  const overlay=document.getElementById('qrModalOverlay');
+  overlay.style.display='flex'; overlay.setAttribute('aria-hidden','false');
+}
+</script>
+
+<!-- html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- QRious -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+<script>
+async function sharePanelImage(){
+  const panel = document.querySelector('.container');
+  if(!panel){ alert('Panel not found'); return; }
+
+  const clone = panel.cloneNode(true);
+
+  // Remove bottom bar clone artifact if present
+  const barInClone = clone.querySelector('.bar');
+  if(barInClone) barInClone.parentNode.removeChild(barInClone);
+
+  // If U8 is minimised, hide the entire U8 group from snapshot
+  if(!u8Visible){
+    const u8GroupInClone = clone.querySelector('.group-8');
+    if(u8GroupInClone) u8GroupInClone.style.display = 'none';
+  } else {
+    // U8 maximised: hide the header bar and REV toggle, remove group styling gaps
+    const u8HeaderInClone = clone.querySelector('#u8BadgeLabel');
+    if(u8HeaderInClone) u8HeaderInClone.style.display = 'none';
+    const u8RevInClone = clone.querySelector('#u8ModeToggleWrap');
+    if(u8RevInClone) u8RevInClone.style.display = 'none';
+    // Keep group-8 border/container styling (same as U7)
+    // Remove unit label gap area left by hidden badge/title
+    const u8LabelInClone = clone.querySelector('#wrap8 .unit-label .title');
+    if(u8LabelInClone) u8LabelInClone.style.display = 'none';
+  }
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;';
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+
+  try{
+    const canvas = await html2canvas(clone,{backgroundColor:null, scale:window.devicePixelRatio||2});
+    const blob   = await new Promise(resolve=> canvas.toBlob(resolve,'image/png'));
+    if(!blob) throw new Error('Failed to create image');
+    const file = new File([blob],'bunker-levels.png',{type:'image/png'});
+
+    if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+      try{ await navigator.share({files:[file],title:'Bunker Levels',text:'MCC4 Bunker levels'}); document.body.removeChild(wrapper); return; }
+      catch(err){ console.warn('Web Share failed:',err); }
+    }
+    if(navigator.clipboard&&navigator.clipboard.write){
+      try{
+        await navigator.clipboard.write([new ClipboardItem({[file.type]:blob})]);
+        alert('Image copied to clipboard — paste in your chat or app');
+        document.body.removeChild(wrapper); return;
+      }catch(err){ console.warn('Clipboard write failed:',err); }
+    }
+    const url=URL.createObjectURL(blob);
+    const win=window.open(url,'_blank');
+    if(!win){
+      const a=document.createElement('a'); a.href=url; a.download='bunker-levels.png';
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+  }catch(err){
+    console.error('sharePanelImage error',err);
+    alert('Failed to create image: '+(err&&err.message));
+  }finally{
+    if(wrapper&&wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
+  }
+}
+</script>
+
+<script>
+/* =====================  PWA: INLINE MANIFEST  ===================== */
+(function(){
+  const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#062868"/><text x="256" y="340" font-size="260" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" fill="#d8dfe9">B</text><rect x="60" y="390" width="392" height="18" rx="9" fill="#1bace9"/></svg>`;
+  const svgBlob = new Blob([iconSvg], {type:'image/svg+xml'});
+  const iconUrl = URL.createObjectURL(svgBlob);
+
+  const manifest = {
+    name: 'Bunker Levels — MCC4',
+    short_name: 'Bunker Levels',
+    description: 'Dr.NTTPS Unit Bunker Levels MCC-4',
+    start_url: './',
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#062868',
+    theme_color: '#0b2740',
+    icons: [
+      { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+      { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+    ]
+  };
+  const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  const manifestUrl = URL.createObjectURL(manifestBlob);
+  const link = document.createElement('link');
+  link.rel = 'manifest'; link.href = manifestUrl;
+  document.head.appendChild(link);
+
+  // Apple touch icon
+  const appleIcon = document.createElement('link');
+  appleIcon.rel = 'apple-touch-icon'; appleIcon.href = iconUrl;
+  document.head.appendChild(appleIcon);
+})();
+
+/* =====================  PWA: SERVICE WORKER (OFFLINE)  ===================== */
+if('serviceWorker' in navigator){
+  const swCode = `
+const CACHE = 'bunker-v1';
+const URLS = ['./', './index.html'];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(URLS)).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(clients.claim());
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('./')))
+  );
+});
+`;
+  const swBlob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl, {scope: './'}).catch(e => console.warn('SW reg failed:', e));
+}
+
+/* =====================  PWA: INSTALL BANNER  ===================== */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner(){
+  if(document.getElementById('installBanner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'installBanner';
+  banner.style.cssText = `
+    position:fixed;bottom:62px;left:50%;transform:translateX(-50%);
+    width:calc(100% - 30px);max-width:420px;
+    background:#062868;border:1px solid #1bace9;border-radius:12px;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;z-index:999999;box-shadow:0 4px 20px rgba(0,0,0,0.5);
+    font-family:Inter,sans-serif;
+  `;
+  banner.innerHTML = `
+    <span style="color:#d8dfe9;font-size:0.85rem;font-weight:600;">📲 Install Bunker Levels app</span>
+    <div style="display:flex;gap:8px;">
+      <button id="installBtn" style="background:#1bace9;color:#000;border:none;border-radius:8px;padding:6px 14px;font-weight:800;cursor:pointer;font-size:0.85rem;">Install</button>
+      <button id="installDismiss" style="background:transparent;color:#9fb6c6;border:1px solid #344c3d;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer;font-size:0.85rem;">✕</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
+
+  document.getElementById('installBtn').addEventListener('click', async () => {
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    banner.remove();
+  });
+  document.getElementById('installDismiss').addEventListener('click', () => banner.remove());
+}
+
+window.addEventListener('appinstalled', () => {
+  const b = document.getElementById('installBanner');
+  if(b) b.remove();
+});
+</script>
+
+</body>
+</html>
