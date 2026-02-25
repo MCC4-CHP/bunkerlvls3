@@ -4,13 +4,9 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Bunker Levels — MCC4</title>
-
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b2740"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="Bunker Levels"/>
-
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -1396,106 +1392,5 @@ async function sharePanelImage(){
   }
 }
 </script>
-
-<script>
-/* =====================  PWA: INLINE MANIFEST  ===================== */
-(function(){
-  const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#062868"/><text x="256" y="340" font-size="260" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" fill="#d8dfe9">B</text><rect x="60" y="390" width="392" height="18" rx="9" fill="#1bace9"/></svg>`;
-  const svgBlob = new Blob([iconSvg], {type:'image/svg+xml'});
-  const iconUrl = URL.createObjectURL(svgBlob);
-
-  const manifest = {
-    name: 'Bunker Levels — MCC4',
-    short_name: 'Bunker Levels',
-    description: 'Dr.NTTPS Unit Bunker Levels MCC-4',
-    start_url: './',
-    display: 'standalone',
-    orientation: 'portrait',
-    background_color: '#062868',
-    theme_color: '#0b2740',
-    icons: [
-      { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-      { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
-    ]
-  };
-  const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-  const manifestUrl = URL.createObjectURL(manifestBlob);
-  const link = document.createElement('link');
-  link.rel = 'manifest'; link.href = manifestUrl;
-  document.head.appendChild(link);
-
-  // Apple touch icon
-  const appleIcon = document.createElement('link');
-  appleIcon.rel = 'apple-touch-icon'; appleIcon.href = iconUrl;
-  document.head.appendChild(appleIcon);
-})();
-
-/* =====================  PWA: SERVICE WORKER (OFFLINE)  ===================== */
-if('serviceWorker' in navigator){
-  const swCode = `
-const CACHE = 'bunker-v1';
-const URLS = ['./', './index.html'];
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(URLS)).then(() => self.skipWaiting()));
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(clients.claim());
-});
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('./')))
-  );
-});
-`;
-  const swBlob = new Blob([swCode], {type:'application/javascript'});
-  const swUrl = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swUrl, {scope: './'}).catch(e => console.warn('SW reg failed:', e));
-}
-
-/* =====================  PWA: INSTALL BANNER  ===================== */
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  showInstallBanner();
-});
-
-function showInstallBanner(){
-  if(document.getElementById('installBanner')) return;
-  const banner = document.createElement('div');
-  banner.id = 'installBanner';
-  banner.style.cssText = `
-    position:fixed;bottom:62px;left:50%;transform:translateX(-50%);
-    width:calc(100% - 30px);max-width:420px;
-    background:#062868;border:1px solid #1bace9;border-radius:12px;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:10px 14px;z-index:999999;box-shadow:0 4px 20px rgba(0,0,0,0.5);
-    font-family:Inter,sans-serif;
-  `;
-  banner.innerHTML = `
-    <span style="color:#d8dfe9;font-size:0.85rem;font-weight:600;">📲 Install Bunker Levels app</span>
-    <div style="display:flex;gap:8px;">
-      <button id="installBtn" style="background:#1bace9;color:#000;border:none;border-radius:8px;padding:6px 14px;font-weight:800;cursor:pointer;font-size:0.85rem;">Install</button>
-      <button id="installDismiss" style="background:transparent;color:#9fb6c6;border:1px solid #344c3d;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer;font-size:0.85rem;">✕</button>
-    </div>
-  `;
-  document.body.appendChild(banner);
-
-  document.getElementById('installBtn').addEventListener('click', async () => {
-    if(!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    banner.remove();
-  });
-  document.getElementById('installDismiss').addEventListener('click', () => banner.remove());
-}
-
-window.addEventListener('appinstalled', () => {
-  const b = document.getElementById('installBanner');
-  if(b) b.remove();
-});
-</script>
-
 </body>
 </html>
